@@ -5,92 +5,137 @@ import logoImage from '../assets/logorm.png';
 const Home = () => {
   const navigate = useNavigate();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const backgroundRef = useRef(null);
+  const canvasRef = useRef(null);
   const [showExplore, setShowExplore] = useState(false);
-  const particlesRef = useRef([]);
 
-  // Initialize particles
+  // Setup 3D wave background animation
   useEffect(() => {
-    particlesRef.current = Array(120).fill().map(() => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      size: Math.random() * 5 + 2,
-      color: `hsl(${Math.random() * 60 + 240}, 70%, 70%)`,
-      speedX: Math.random() * 1 - 0.5,
-      speedY: Math.random() * 1 - 0.5,
-      z: Math.random() * 200 - 100
-    }));
-
-    const canvas = backgroundRef.current;
+    const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    
-    // Animation function
-    let animationId;
-    const animate = () => {
+
+    // Wave parameters
+    const waves = [
+      { wavelength: 200, amplitude: 85, speed: 0.03, color: 'rgba(123, 31, 162, 0.2)' },
+      { wavelength: 150, amplitude: 60, speed: 0.02, color: 'rgba(103, 58, 183, 0.2)' },
+      { wavelength: 100, amplitude: 40, speed: 0.04, color: 'rgba(66, 165, 245, 0.2)' },
+      { wavelength: 80, amplitude: 30, speed: 0.01, color: 'rgba(3, 169, 244, 0.2)' }
+    ];
+
+    let time = 0;
+    let frameId;
+
+    // Render waves with 3D effect
+    const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw and update particles
-      particlesRef.current.forEach(particle => {
-        // Calculate distance from mouse for interaction
-        const dx = particle.x - mousePosition.x * window.innerWidth;
-        const dy = particle.y - mousePosition.y * window.innerHeight;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+      time += 0.005;
+
+      // Create a gradient for the background
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#0a041a');
+      gradient.addColorStop(1, '#170b34');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw each wave layer
+      waves.forEach((wave, index) => {
+        ctx.fillStyle = wave.color;
+        ctx.beginPath();
         
-        // Particle movement
-        particle.x += particle.speedX;
-        particle.y += particle.speedY;
+        // Add mouse influence point
+        const mouseX = mousePosition.x * canvas.width;
+        const mouseY = mousePosition.y * canvas.height;
+        const mouseInfluence = 80;
         
-        // Mouse influence - particles move away from mouse
-        if (distance < 200) {
-          const angle = Math.atan2(dy, dx);
-          const force = (200 - distance) / 1000;
-          particle.x += Math.cos(angle) * force * 5;
-          particle.y += Math.sin(angle) * force * 5;
+        // Draw wave points
+        for (let x = 0; x <= canvas.width; x += 5) {
+          // Calculate distance from mouse
+          const distX = x - mouseX;
+          const distY = canvas.height * 0.7 - mouseY;
+          const distance = Math.sqrt(distX * distX + distY * distY);
+          
+          // Mouse influence factor (1 at mouse position, 0 far away)
+          const influenceFactor = Math.max(0, 1 - distance / mouseInfluence);
+          
+          // Wave equation with added mouse influence
+          let y = Math.sin(x / wave.wavelength + time * wave.speed) * wave.amplitude;
+          y += Math.cos((x + 30) / (wave.wavelength * 0.8) + time * wave.speed * 1.5) * wave.amplitude * 0.5;
+          
+          // Add mouse influence
+          y += influenceFactor * 30;
+          
+          // Position waves at different heights
+          y += canvas.height * (0.5 + (index * 0.1));
+          
+          // Draw point
+          if (x === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
         }
         
-        // Boundary check
-        if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1;
+        // Complete the wave shape
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
         
-        // Draw particle
-        const perspective = 300 / (300 + particle.z);
-        const size = particle.size * perspective;
-        const x = particle.x;
-        const y = particle.y;
-        const opacity = perspective * 0.8;
+        // Add some shimmer/highlights to wave tops
+        if (index === 3) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          
+          for (let x = 0; x <= canvas.width; x += 50) {
+            const y = Math.sin(x / wave.wavelength + time * wave.speed) * wave.amplitude;
+            const y2 = Math.cos((x + 30) / (wave.wavelength * 0.8) + time * wave.speed * 1.5) * wave.amplitude * 0.5;
+            const influenceFactor = Math.max(0, 1 - Math.abs(x - mouseX) / mouseInfluence);
+            
+            const highlight = y + y2 + influenceFactor * 30 + canvas.height * (0.5 + (index * 0.1));
+            
+            ctx.moveTo(x, highlight);
+            ctx.lineTo(x + 10, highlight - 5);
+          }
+          
+          ctx.stroke();
+        }
+      });
+      
+      // Add some floating particles
+      for (let i = 0; i < 20; i++) {
+        const x = ((time * 30) + i * 100) % canvas.width;
+        const y = canvas.height * 0.5 + Math.sin(time + i) * 50;
+        const size = Math.sin(time * 2 + i) * 2 + 3;
         
         ctx.beginPath();
         ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color.replace(')', `, ${opacity})`).replace('hsl', 'hsla');
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 + Math.sin(time + i) * 0.1})`;
         ctx.fill();
-        
-        // Draw connections between nearby particles
-        particlesRef.current.forEach(other => {
-          const dx = particle.x - other.x;
-          const dy = particle.y - other.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(other.x, other.y);
-            ctx.strokeStyle = `rgba(180, 210, 255, ${0.1 * (1 - distance / 100)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        });
-      });
+      }
       
-      animationId = requestAnimationFrame(animate);
+      // Add vertical "sound beams"
+      for (let i = 0; i < 10; i++) {
+        const x = canvas.width * (0.1 + i * 0.1);
+        const height = (Math.sin(time * 3 + i * 0.5) * 0.5 + 0.5) * canvas.height * 0.5;
+        
+        const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - height);
+        gradient.addColorStop(0, 'rgba(103, 58, 183, 0)');
+        gradient.addColorStop(1, 'rgba(103, 58, 183, 0.3)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x - 5, canvas.height - height, 10, height);
+      }
+
+      frameId = requestAnimationFrame(render);
     };
-    
-    animate();
-    
-    // Cleanup function
+
+    render();
+
+    // Clean up animation frame
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(frameId);
     };
   }, [mousePosition]);
 
@@ -105,7 +150,7 @@ const Home = () => {
     
     // Handle window resize
     const handleResize = () => {
-      const canvas = backgroundRef.current;
+      const canvas = canvasRef.current;
       if (canvas) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -136,10 +181,10 @@ const Home = () => {
   ];
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-black">
-      {/* Canvas Background */}
+    <div className="relative h-screen w-full overflow-hidden">
+      {/* Canvas for 3D Waves Background */}
       <canvas 
-        ref={backgroundRef}
+        ref={canvasRef}
         className="absolute inset-0 z-0"
       />
 
