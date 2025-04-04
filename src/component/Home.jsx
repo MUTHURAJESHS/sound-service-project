@@ -7,6 +7,92 @@ const Home = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const backgroundRef = useRef(null);
   const [showExplore, setShowExplore] = useState(false);
+  const particlesRef = useRef([]);
+
+  // Initialize particles
+  useEffect(() => {
+    particlesRef.current = Array(120).fill().map(() => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 5 + 2,
+      color: `hsl(${Math.random() * 60 + 240}, 70%, 70%)`,
+      speedX: Math.random() * 1 - 0.5,
+      speedY: Math.random() * 1 - 0.5,
+      z: Math.random() * 200 - 100
+    }));
+
+    const canvas = backgroundRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Animation function
+    let animationId;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw and update particles
+      particlesRef.current.forEach(particle => {
+        // Calculate distance from mouse for interaction
+        const dx = particle.x - mousePosition.x * window.innerWidth;
+        const dy = particle.y - mousePosition.y * window.innerHeight;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Particle movement
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        // Mouse influence - particles move away from mouse
+        if (distance < 200) {
+          const angle = Math.atan2(dy, dx);
+          const force = (200 - distance) / 1000;
+          particle.x += Math.cos(angle) * force * 5;
+          particle.y += Math.sin(angle) * force * 5;
+        }
+        
+        // Boundary check
+        if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1;
+        if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1;
+        
+        // Draw particle
+        const perspective = 300 / (300 + particle.z);
+        const size = particle.size * perspective;
+        const x = particle.x;
+        const y = particle.y;
+        const opacity = perspective * 0.8;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color.replace(')', `, ${opacity})`).replace('hsl', 'hsla');
+        ctx.fill();
+        
+        // Draw connections between nearby particles
+        particlesRef.current.forEach(other => {
+          const dx = particle.x - other.x;
+          const dy = particle.y - other.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(other.x, other.y);
+            ctx.strokeStyle = `rgba(180, 210, 255, ${0.1 * (1 - distance / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+      
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    
+    // Cleanup function
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [mousePosition]);
 
   // Handle mouse movement
   useEffect(() => {
@@ -17,8 +103,22 @@ const Home = () => {
       });
     };
     
+    // Handle window resize
+    const handleResize = () => {
+      const canvas = backgroundRef.current;
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    };
+    
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Navigation handlers
@@ -37,6 +137,12 @@ const Home = () => {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-black">
+      {/* Canvas Background */}
+      <canvas 
+        ref={backgroundRef}
+        className="absolute inset-0 z-0"
+      />
+
       {/* Logo - Only shown on Home page */}
       <div className="absolute top-6 left-6 z-50">
         <img
@@ -45,38 +151,6 @@ const Home = () => {
           className="h-20 w-auto cursor-pointer transition-transform hover:scale-105"
           onClick={() => navigate('/')}
         />
-      </div>
-
-      {/* New 3D Sound Equalizer Background */}
-      <div
-        ref={backgroundRef}
-        className="absolute inset-0"
-        style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
-      >
-        <div className="absolute inset-0 grid grid-cols-12 gap-2 p-4">
-          {[...Array(48)].map((_, i) => {
-            const col = i % 12;
-            const row = Math.floor(i / 12);
-            const distanceFromMouse = Math.sqrt(
-              Math.pow((col / 12) - mousePosition.x, 2) + 
-              Math.pow((row / 4) - mousePosition.y, 2)
-            );
-            const height = Math.max(10, 100 - (distanceFromMouse * 200));
-            
-            return (
-              <div
-                key={`bar-${i}`}
-                className="bg-gradient-to-t from-purple-500 to-cyan-400 opacity-60 rounded-t"
-                style={{
-                  height: `${height}px`,
-                  transform: `translateZ(${height / 2}px)`,
-                  animation: `soundPulse ${1.5 + Math.random() * 1}s infinite ease-in-out ${Math.random() * 0.5}s`,
-                  transition: 'height 0.2s ease-out, transform 0.2s ease-out'
-                }}
-              />
-            );
-          })}
-        </div>
       </div>
 
       {/* Content */}
@@ -109,14 +183,10 @@ const Home = () => {
         ) : (
           <div className="flex w-full max-w-6xl flex-col items-center">
             <div className="mb-8 flex w-full items-center justify-between">
-              {/* <h2 className="text-3xl font-bold text-white">Explore Functions</h2> */}
               <button
                 onClick={handleExploreClick}
                 className="rounded-full bg-gray-800 p-2 text-gray-300 transition-colors hover:bg-gray-700"
               >
-                {/* <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg> */}
               </button>
             </div>
             <div className="grid w-full gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -143,21 +213,6 @@ const Home = () => {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes soundPulse {
-          0%, 100% { 
-            height: 20px;
-            transform: translateZ(10px);
-            opacity: 0.4;
-          }
-          50% { 
-            height: 80px;
-            transform: translateZ(40px);
-            opacity: 0.7;
-          }
-        }
-      `}</style>
     </div>
   );
 };
