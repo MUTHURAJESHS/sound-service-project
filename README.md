@@ -15,3 +15,4 @@ If you are developing a production application, we recommend using TypeScript an
 # sound-project
 # sound-project
 # sound-project
+# sound-service-project
