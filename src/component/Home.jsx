@@ -78,16 +78,35 @@ const Home = () => {
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* 3D CUBE BACKGROUND */}
+      {/* COLORFUL BACKGROUND */}
       <div className="absolute inset-0 z-0">
-        {/* Dark gradient background */}
+        {/* Vibrant animated gradient background */}
         <div 
-          className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-black"
+          className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600"
           style={{
             backgroundSize: '400% 400%',
-            animation: 'gradientFlow 15s ease infinite'
+            animation: 'colorfulFlow 15s ease infinite'
           }}
         />
+        
+        {/* Bubbles overlay */}
+        <div className="absolute inset-0 overflow-hidden">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div 
+              key={`bubble-${i}`}
+              className="absolute rounded-full bg-gradient-to-br from-white/30 to-white/5 backdrop-blur-md"
+              style={{
+                width: `${Math.random() * 200 + 50}px`,
+                height: `${Math.random() * 200 + 50}px`,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${Math.random() * 20 + 20}s linear infinite`,
+                animationDelay: `${Math.random() * -20}s`,
+                opacity: Math.random() * 0.5 + 0.1
+              }}
+            />
+          ))}
+        </div>
         
         {/* 3D perspective container */}
         <div 
@@ -125,11 +144,11 @@ const Home = () => {
               ].map((face, faceIndex) => (
                 <div
                   key={`face-${faceIndex}`}
-                  className="absolute inset-0 border border-white/20 backdrop-blur-sm"
+                  className="absolute inset-0 border border-white/30 backdrop-blur-sm"
                   style={{
                     '--size': `${cube.size}px`,
                     transform: face.transform,
-                    background: `linear-gradient(45deg, ${face.background}80, ${face.background}40)`,
+                    background: `linear-gradient(45deg, ${face.background}90, ${face.background}40)`,
                     backfaceVisibility: 'hidden'
                   }}
                 />
@@ -138,74 +157,85 @@ const Home = () => {
           ))}
         </div>
 
-        {/* Overlay grid pattern */}
+        {/* Glowing particles */}
         <div className="absolute inset-0">
-          <svg className="h-full w-full opacity-20" width="100%" height="100%">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path 
-                  d="M 40 0 L 0 0 0 40" 
-                  fill="none" 
-                  stroke="rgba(255,255,255,0.2)" 
-                  strokeWidth="1"
-                />
-              </pattern>
-              <linearGradient id="gridGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f472b6" stopOpacity="0.3" />
-                <stop offset="50%" stopColor="#818cf8" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.3" />
-              </linearGradient>
-              <mask id="gridMask">
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </mask>
-            </defs>
-            <rect 
-              width="100%" 
-              height="100%" 
-              fill="url(#gridGradient)" 
-              mask="url(#gridMask)"
+          {Array.from({ length: 100 }).map((_, i) => (
+            <div
+              key={`particle-${i}`}
+              className="absolute rounded-full bg-white"
               style={{
-                transformOrigin: 'center',
-                animation: 'gridRotate 30s linear infinite'
+                width: `${Math.random() * 4 + 1}px`,
+                height: `${Math.random() * 4 + 1}px`,
+                left: `${Math.random() * 100}%`, 
+                top: `${Math.random() * 100}%`,
+                boxShadow: `0 0 ${Math.random() * 10 + 5}px ${Math.random() * 3 + 1}px rgba(255, 255, 255, 0.8)`,
+                animation: `twinkle ${Math.random() * 5 + 2}s ease-in-out infinite alternate`,
+                animationDelay: `${Math.random() * -5}s`
               }}
+            />
+          ))}
+        </div>
+
+        {/* Wave effect overlay */}
+        <div className="absolute inset-0 opacity-20">
+          <svg width="100%" height="100%" className="absolute top-0">
+            <defs>
+              <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ff6b6b" />
+                <stop offset="50%" stopColor="#4ecdc4" />
+                <stop offset="100%" stopColor="#8a2be2" />
+              </linearGradient>
+            </defs>
+            <path 
+              d="" 
+              fill="none" 
+              stroke="url(#wave-gradient)" 
+              strokeWidth="2"
+              style={{
+                animation: 'wavePath 20s linear infinite'
+              }}
+              id="wavePath"
             />
           </svg>
         </div>
       </div>
 
-      {/* Logo */}
-      <div className="absolute top-6 left-6 z-50">
-        <img
-          src={logoImage}
-          alt="SoundWave Logo"
-          className="h-20 w-auto cursor-pointer transition-transform hover:scale-105"
-          onClick={() => navigate('/')}
-        />
-      </div>
+      {/* Global layout for header (logo and icons) */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between p-6">
+        {/* Logo */}
+        <div>
+          <img
+            src={logoImage}
+            alt="SoundWave Logo"
+            className="h-20 w-auto cursor-pointer transition-transform hover:scale-105"
+            onClick={() => navigate('/')}
+          />
+        </div>
 
-      {/* Contact and Instagram Icons */}
-      <div className="absolute top-6 right-6 z-50 flex space-x-4">
-        {/* Contact Icon */}
-        <button 
-          onClick={handleContactClick}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:bg-white/30 hover:shadow-lg hover:shadow-white/20"
-          aria-label="Contact Us"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm2 2v10h14V5H4zm2 3a1 1 0 011-1h8a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H7a1 1 0 01-1-1z" />
-          </svg>
-        </button>
-        
-        {/* Instagram Icon */}
-        <button 
-          onClick={handleInstagramClick}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white transition-all hover:from-purple-500 hover:to-pink-400 hover:shadow-lg hover:shadow-pink-500/30"
-          aria-label="Follow us on Instagram"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-          </svg>
-        </button>
+        {/* Contact and Instagram Icons */}
+        <div className="flex space-x-4">
+          {/* Contact Icon */}
+          <button 
+            onClick={handleContactClick}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-all hover:bg-white/30 hover:shadow-lg hover:shadow-white/20"
+            aria-label="Contact Us"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 3a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm2 2v10h14V5H4zm2 3a1 1 0 011-1h8a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H7a1 1 0 01-1-1z" />
+            </svg>
+          </button>
+          
+          {/* Instagram Icon */}
+          <button 
+            onClick={handleInstagramClick}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white transition-all hover:from-purple-500 hover:to-pink-400 hover:shadow-lg hover:shadow-pink-500/30"
+            aria-label="Follow us on Instagram"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -274,15 +304,37 @@ const Home = () => {
 
       <style>
         {`
-          @keyframes gradientFlow {
+          @keyframes colorfulFlow {
             0% { background-position: 0% 50% }
+            25% { background-position: 50% 100% }
             50% { background-position: 100% 50% }
+            75% { background-position: 50% 0% }
             100% { background-position: 0% 50% }
           }
           
-          @keyframes gridRotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+          @keyframes float {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); }
+            25% { transform: translateY(-20px) translateX(20px) rotate(5deg); }
+            50% { transform: translateY(0) translateX(40px) rotate(0deg); }
+            75% { transform: translateY(20px) translateX(20px) rotate(-5deg); }
+            100% { transform: translateY(0) translateX(0) rotate(0deg); }
+          }
+          
+          @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+          }
+          
+          @keyframes wavePath {
+            0% {
+              d: path('M0,50 C150,100 350,0 500,50 C650,100 850,0 1000,50 L1000,500 L0,500 Z');
+            }
+            50% {
+              d: path('M0,50 C150,0 350,100 500,50 C650,0 850,100 1000,50 L1000,500 L0,500 Z');
+            }
+            100% {
+              d: path('M0,50 C150,100 350,0 500,50 C650,100 850,0 1000,50 L1000,500 L0,500 Z');
+            }
           }
         `}
       </style>
