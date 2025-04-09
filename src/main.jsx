@@ -18,3 +18,4 @@ if (!link) {
 } else {
   link.href = logoImage;
 }
+
